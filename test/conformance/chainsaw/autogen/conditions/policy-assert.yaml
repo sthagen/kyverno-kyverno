@@ -27,7 +27,6 @@ status:
               - fluxcd.io/cow
               - fluxcd.io/dog
         message: The only approved FluxCD annotations are `fluxcd.io/cow` and `fluxcd.io/dog`.
-        failureAction: Enforce
     - match:
         any:
         - resources:
@@ -44,7 +43,6 @@ status:
               - fluxcd.io/cow
               - fluxcd.io/dog
         message: The only approved FluxCD annotations are `fluxcd.io/cow` and `fluxcd.io/dog`.
-        failureAction: Enforce
   conditions:
   - reason: Succeeded
     status: "True"

@@ -35,6 +35,7 @@ var policy = `
         "name": "disallow-unsigned-images"
     },
     "spec": {
+        "validationFailureAction": "enforce",
         "background": false,
         "rules": [
             {

@@ -144,8 +144,8 @@ type options struct {
 
 func newOptions() options {
 	return options{
-		clientRateLimitQPS:   100,
-		clientRateLimitBurst: 200,
+		clientRateLimitQPS:   20,
+		clientRateLimitBurst: 50,
 		eventsRateLimitQPS:   1000,
 		eventsRateLimitBurst: 2000,
 	}

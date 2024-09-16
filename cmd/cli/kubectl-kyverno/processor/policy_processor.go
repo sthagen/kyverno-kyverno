@@ -10,7 +10,8 @@ import (
 
 	json_patch "github.com/evanphx/json-patch/v5"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	kyvernov2 "github.com/kyverno/kyverno/api/kyverno/v2"
+	kyvernov1beta1 "github.com/kyverno/kyverno/api/kyverno/v1beta1"
+	kyvernov2beta1 "github.com/kyverno/kyverno/api/kyverno/v2beta1"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/apis/v1alpha1"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/log"
 	"github.com/kyverno/kyverno/cmd/cli/kubectl-kyverno/store"
@@ -25,7 +26,6 @@ import (
 	"github.com/kyverno/kyverno/pkg/engine/jmespath"
 	"github.com/kyverno/kyverno/pkg/engine/mutate/patch"
 	"github.com/kyverno/kyverno/pkg/engine/policycontext"
-	"github.com/kyverno/kyverno/pkg/exceptions"
 	"github.com/kyverno/kyverno/pkg/imageverifycache"
 	"github.com/kyverno/kyverno/pkg/registryclient"
 	jsonutils "github.com/kyverno/kyverno/pkg/utils/json"
@@ -39,11 +39,11 @@ type PolicyProcessor struct {
 	Store                     *store.Store
 	Policies                  []kyvernov1.PolicyInterface
 	Resource                  unstructured.Unstructured
-	PolicyExceptions          []*kyvernov2.PolicyException
+	PolicyExceptions          []*kyvernov2beta1.PolicyException
 	MutateLogPath             string
 	MutateLogPathIsDir        bool
 	Variables                 *variables.Variables
-	UserInfo                  *kyvernov2.RequestInfo
+	UserInfo                  *kyvernov1beta1.RequestInfo
 	PolicyReport              bool
 	NamespaceSelectorMap      map[string]map[string]string
 	Stdin                     bool
@@ -80,12 +80,9 @@ func (p *PolicyProcessor) ApplyPoliciesOnResource() ([]engineapi.EngineResponse,
 		factories.DefaultRegistryClientFactory(adapters.RegistryClient(rclient), nil),
 		imageverifycache.DisabledImageVerifyCache(),
 		store.ContextLoaderFactory(p.Store, nil),
-		exceptions.New(policyExceptionLister),
+		policyExceptionLister,
 	)
 	gvk, subresource := resource.GroupVersionKind(), ""
-	resourceKind := resource.GetKind()
-	resourceName := resource.GetName()
-	resourceNamespace := resource.GetNamespace()
 	// If --cluster flag is not set, then we need to find the top level resource GVK and subresource
 	if p.Client == nil {
 		for _, s := range p.Subresources {
@@ -104,17 +101,8 @@ func (p *PolicyProcessor) ApplyPoliciesOnResource() ([]engineapi.EngineResponse,
 				subresource = parts[1]
 			}
 		}
-	} else {
-		if len(namespaceLabels) == 0 && resourceKind != "Namespace" && resourceNamespace != "" {
-			ns, err := p.Client.GetResource(context.TODO(), "v1", "Namespace", "", resourceNamespace)
-			if err != nil {
-				log.Log.Error(err, "failed to get the resource's namespace")
-				return nil, fmt.Errorf("failed to get the resource's namespace (%w)", err)
-			}
-			namespaceLabels = ns.GetLabels()
-		}
 	}
-	resPath := fmt.Sprintf("%s/%s/%s", resourceNamespace, resourceKind, resourceName)
+	resPath := fmt.Sprintf("%s/%s/%s", resource.GetNamespace(), resource.GetKind(), resource.GetName())
 	responses := make([]engineapi.EngineResponse, 0, len(p.Policies))
 	// mutate
 	for _, policy := range p.Policies {
@@ -205,7 +193,7 @@ func (p *PolicyProcessor) ApplyPoliciesOnResource() ([]engineapi.EngineResponse,
 				}
 				responses = append(responses, generateResponse)
 			}
-			p.Rc.addGenerateResponse(generateResponse)
+			p.Rc.addGenerateResponse(p.AuditWarn, generateResponse)
 		}
 	}
 	p.Rc.addEngineResponses(p.AuditWarn, responses...)
@@ -265,6 +253,14 @@ func (p *PolicyProcessor) makePolicyContext(
 		if err := policyContext.JSONContext().AddOldResource(resource.Object); err != nil {
 			return nil, fmt.Errorf("failed to update old resource in json context (%w)", err)
 		}
+	}
+	if p.Client != nil && len(namespaceLabels) == 0 && resource.GetKind() != "Namespace" && resource.GetNamespace() != "" {
+		ns, err := p.Client.GetResource(context.TODO(), "v1", "Namespace", "", resource.GetNamespace())
+		if err != nil {
+			log.Log.Error(err, "failed to get the resource's namespace")
+			return nil, fmt.Errorf("failed to get the resource's namespace (%w)", err)
+		}
+		namespaceLabels = ns.GetLabels()
 	}
 	policyContext = policyContext.
 		WithPolicy(policy).
@@ -356,7 +352,7 @@ func (p *PolicyProcessor) processMutateEngineResponse(response engineapi.EngineR
 				if !p.Stdin {
 					fmt.Fprintf(p.Out, "\nmutate policy %s applied to %s:", response.Policy().GetName(), resourcePath)
 				}
-				fmt.Fprintf(p.Out, "\n"+mutatedResource+"\n") //nolint:govet
+				fmt.Fprintf(p.Out, "\n"+mutatedResource+"\n")
 			}
 		} else {
 			err := p.printMutatedOutput(string(yamlEncodedResource))

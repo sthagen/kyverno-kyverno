@@ -15,7 +15,5 @@ spec:
     try:
     - apply:
         file: clusterpolicy.yaml
-    - sleep:
-        duration: 3s
     - assert:
         file: clusterpolicy-assert.yaml

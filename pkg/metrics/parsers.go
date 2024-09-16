@@ -77,12 +77,6 @@ func GetPolicyInfos(policy kyvernov1.PolicyInterface) (string, string, PolicyTyp
 		policyType = Namespaced
 	}
 	backgroundMode := ParsePolicyBackgroundMode(policy)
-	isEnforce := policy.GetSpec().HasValidateEnforce()
-	var validationMode PolicyValidationMode
-	if isEnforce {
-		validationMode = Enforce
-	} else {
-		validationMode = Audit
-	}
-	return name, namespace, policyType, backgroundMode, validationMode, nil
+	validationMode, err := ParsePolicyValidationMode(policy.GetSpec().ValidationFailureAction)
+	return name, namespace, policyType, backgroundMode, validationMode, err
 }
