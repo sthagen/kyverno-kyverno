@@ -261,7 +261,7 @@ func (iv *ImageVerifier) Verify(
 		start := time.Now()
 		isInCache := false
 		if iv.ivCache != nil {
-			found, err := iv.ivCache.Get(ctx, iv.policyContext.Policy(), iv.rule.Name, image)
+			found, err := iv.ivCache.Get(ctx, iv.policyContext.Policy(), iv.rule.Name, image, imageVerify.UseCache)
 			if err != nil {
 				iv.logger.Error(err, "error occurred during cache get")
 			} else {
@@ -280,7 +280,7 @@ func (iv *ImageVerifier) Verify(
 			ruleResp, digest = iv.verifyImage(ctx, imageVerify, imageInfo, cfg)
 			if ruleResp != nil && ruleResp.Status() == engineapi.RuleStatusPass {
 				if iv.ivCache != nil {
-					setted, err := iv.ivCache.Set(ctx, iv.policyContext.Policy(), iv.rule.Name, image)
+					setted, err := iv.ivCache.Set(ctx, iv.policyContext.Policy(), iv.rule.Name, image, imageVerify.UseCache)
 					if err != nil {
 						iv.logger.Error(err, "error occurred during cache set")
 					} else {
@@ -551,7 +551,6 @@ func (iv *ImageVerifier) buildCosignVerifier(
 	opts := &images.Options{
 		ImageRef:    image,
 		Repository:  imageVerify.Repository,
-		CosignOCI11: imageVerify.CosignOCI11,
 		Annotations: imageVerify.Annotations,
 		Client:      iv.rclient,
 	}
@@ -592,7 +591,6 @@ func (iv *ImageVerifier) buildCosignVerifier(
 		if attestor.Keys.CTLog != nil {
 			opts.IgnoreSCT = attestor.Keys.CTLog.IgnoreSCT
 			opts.CTLogsPubKey = attestor.Keys.CTLog.CTLogPubKey
-			opts.TSACertChain = attestor.Keys.CTLog.TSACertChain
 		} else {
 			opts.IgnoreSCT = false
 		}
@@ -614,7 +612,6 @@ func (iv *ImageVerifier) buildCosignVerifier(
 		if attestor.Certificates.CTLog != nil {
 			opts.IgnoreSCT = attestor.Certificates.CTLog.IgnoreSCT
 			opts.CTLogsPubKey = attestor.Certificates.CTLog.CTLogPubKey
-			opts.TSACertChain = attestor.Certificates.CTLog.TSACertChain
 		} else {
 			opts.IgnoreSCT = false
 		}
@@ -632,7 +629,6 @@ func (iv *ImageVerifier) buildCosignVerifier(
 		if attestor.Keyless.CTLog != nil {
 			opts.IgnoreSCT = attestor.Keyless.CTLog.IgnoreSCT
 			opts.CTLogsPubKey = attestor.Keyless.CTLog.CTLogPubKey
-			opts.TSACertChain = attestor.Keyless.CTLog.TSACertChain
 		} else {
 			opts.IgnoreSCT = false
 		}
