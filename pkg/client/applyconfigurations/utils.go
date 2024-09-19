@@ -77,14 +77,20 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &kyvernov1.DenyApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("DryRunOption"):
 		return &kyvernov1.DryRunOptionApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ForEachGeneration"):
+		return &kyvernov1.ForEachGenerationApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ForEachMutation"):
 		return &kyvernov1.ForEachMutationApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ForEachValidation"):
 		return &kyvernov1.ForEachValidationApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("GeneratePattern"):
+		return &kyvernov1.GeneratePatternApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("Generation"):
 		return &kyvernov1.GenerationApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("GlobalContextEntryReference"):
 		return &kyvernov1.GlobalContextEntryReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("HTTPHeader"):
+		return &kyvernov1.HTTPHeaderApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ImageExtractorConfig"):
 		return &kyvernov1.ImageExtractorConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ImageRegistry"):
@@ -137,6 +143,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &kyvernov1.TargetResourceSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("UserInfo"):
 		return &kyvernov1.UserInfoApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ValidateImageVerification"):
+		return &kyvernov1.ValidateImageVerificationApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ValidatingAdmissionPolicyStatus"):
 		return &kyvernov1.ValidatingAdmissionPolicyStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("Validation"):
@@ -185,6 +193,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &kyvernov2.PolicyExceptionSpecApplyConfiguration{}
 	case v2.SchemeGroupVersion.WithKind("RequestInfo"):
 		return &kyvernov2.RequestInfoApplyConfiguration{}
+	case v2.SchemeGroupVersion.WithKind("RuleContext"):
+		return &kyvernov2.RuleContextApplyConfiguration{}
 	case v2.SchemeGroupVersion.WithKind("UpdateRequest"):
 		return &kyvernov2.UpdateRequestApplyConfiguration{}
 	case v2.SchemeGroupVersion.WithKind("UpdateRequestSpec"):

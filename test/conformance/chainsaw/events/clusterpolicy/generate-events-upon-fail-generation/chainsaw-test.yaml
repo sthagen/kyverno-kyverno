@@ -1,7 +1,6 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  creationTimestamp: null
   name: generate-events-upon-fail-generation
 spec:
   steps:
@@ -9,6 +8,8 @@ spec:
     try:
     - apply:
         file: crd.yaml
+    - apply:
+        file: permissions.yaml
     - assert:
         file: crd-assert.yaml
   - name: step-02

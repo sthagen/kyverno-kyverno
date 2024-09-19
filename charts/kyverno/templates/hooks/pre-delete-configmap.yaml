@@ -36,7 +36,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: {{ template "kyverno.fullname" . }}:remove-configmap
-  namespace: {{ template "kyverno.namespace" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ template "kyverno.fullname" . }}-remove-configmap
@@ -84,8 +83,8 @@ spec:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
       restartPolicy: Never
-      {{- with .Values.webhooksCleanup.imagePullSecrets }}
-      imagePullSecrets: 
+      {{- with .Values.webhooksCleanup.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
       containers:

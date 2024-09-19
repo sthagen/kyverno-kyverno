@@ -1,7 +1,6 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  creationTimestamp: null
   name: resource-correct
 spec:
   steps:
@@ -14,9 +13,11 @@ spec:
     - apply:
         file: gctxentry.yaml
     - sleep:
-        duration: 5s
+        duration: 3s
     - apply:
         file: clusterpolicy.yaml
+    - sleep:
+        duration: 3s
     - assert:
         file: clusterpolicy-ready.yaml
     - apply:

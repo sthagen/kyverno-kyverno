@@ -1,7 +1,6 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  creationTimestamp: null
   name: delete-trigger-namespace
 spec:
   steps:
@@ -40,5 +39,5 @@ spec:
         content: kubectl get updaterequests -n kyverno
         check:
           # This check ensures the contents of stderr are exactly as shown.
-          ($stderr): |-
+          (trim_space($stderr)): |-
             No resources found in kyverno namespace.

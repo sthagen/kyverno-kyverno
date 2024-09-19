@@ -1,7 +1,6 @@
 apiVersion: chainsaw.kyverno.io/v1alpha1
 kind: Test
 metadata:
-  creationTimestamp: null
   name: multiple-trigger-resources
 spec:
   steps:
@@ -37,5 +36,5 @@ spec:
         content: kubectl get updaterequests -n kyverno
         check:
           # This check ensures the contents of stderr are exactly as shown.
-          ($stderr): |-
+          (trim_space($stderr)): |-
             No resources found in kyverno namespace.

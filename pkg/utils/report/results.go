@@ -90,12 +90,13 @@ func SeverityFromString(severity string) policyreportv1alpha2.PolicySeverity {
 
 func ToPolicyReportResult(policyType engineapi.PolicyType, policyName string, ruleResult engineapi.RuleResponse, annotations map[string]string, resource *corev1.ObjectReference) policyreportv1alpha2.PolicyReportResult {
 	result := policyreportv1alpha2.PolicyReportResult{
-		Source:  kyverno.ValueKyvernoApp,
-		Policy:  policyName,
-		Rule:    ruleResult.Name(),
-		Message: ruleResult.Message(),
-		Result:  toPolicyResult(ruleResult.Status()),
-		Scored:  annotations[kyverno.AnnotationPolicyScored] != "false",
+		Source:     kyverno.ValueKyvernoApp,
+		Policy:     policyName,
+		Rule:       ruleResult.Name(),
+		Message:    ruleResult.Message(),
+		Properties: ruleResult.Properties(),
+		Result:     toPolicyResult(ruleResult.Status()),
+		Scored:     annotations[kyverno.AnnotationPolicyScored] != "false",
 		Timestamp: metav1.Timestamp{
 			Seconds: time.Now().Unix(),
 		},
@@ -110,8 +111,13 @@ func ToPolicyReportResult(policyType engineapi.PolicyType, policyName string, ru
 			*resource,
 		}
 	}
-	if ruleResult.Exception() != nil {
-		addProperty("exception", ruleResult.Exception().Name, &result)
+	exceptions := ruleResult.Exceptions()
+	if len(exceptions) > 0 {
+		var names []string
+		for _, exception := range exceptions {
+			names = append(names, exception.Name)
+		}
+		addProperty("exceptions", strings.Join(names, ","), &result)
 	}
 	pss := ruleResult.PodSecurityChecks()
 	if pss != nil && len(pss.Checks) > 0 {

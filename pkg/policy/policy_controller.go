@@ -63,7 +63,7 @@ type policyController struct {
 	eventRecorder events.EventRecorder
 
 	// Policies that need to be synced
-	queue workqueue.RateLimitingInterface
+	queue workqueue.TypedRateLimitingInterface[any]
 
 	// pLister can list/get policy from the shared informer's store
 	pLister kyvernov1listers.ClusterPolicyLister
@@ -129,7 +129,7 @@ func NewPolicyController(
 		npInformer:      npInformer,
 		eventGen:        eventGen,
 		eventRecorder:   eventBroadcaster.NewRecorder(scheme.Scheme, "policy_controller"),
-		queue:           workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "policy"),
+		queue:           workqueue.NewNamedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[any](), "policy"),
 		configuration:   configuration,
 		reconcilePeriod: reconcilePeriod,
 		metricsConfig:   metricsConfig,
@@ -398,7 +398,7 @@ func (pc *policyController) requeuePolicies() {
 
 func (pc *policyController) handleUpdateRequest(ur *kyvernov2.UpdateRequest, triggerResource *unstructured.Unstructured, ruleName string, policy kyvernov1.PolicyInterface) (skip bool, err error) {
 	namespaceLabels := engineutils.GetNamespaceSelectorsFromNamespaceLister(triggerResource.GetKind(), triggerResource.GetNamespace(), pc.nsLister, pc.log)
-	policyContext, err := backgroundcommon.NewBackgroundContext(pc.log, pc.client, ur, policy, triggerResource, pc.configuration, pc.jp, namespaceLabels)
+	policyContext, err := backgroundcommon.NewBackgroundContext(pc.log, pc.client, ur.Spec.Context, policy, triggerResource, pc.configuration, pc.jp, namespaceLabels)
 	if err != nil {
 		return false, fmt.Errorf("failed to build policy context for rule %s: %w", ruleName, err)
 	}

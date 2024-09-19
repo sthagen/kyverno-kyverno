@@ -52,6 +52,42 @@ func TestAddOperationsForValidatingWebhookConfMultiplePolicies(t *testing.T) {
 			expectedResult: map[string][]admissionregistrationv1.OperationType{
 				"ConfigMap": {"CREATE", "UPDATE", "DELETE", "CONNECT"},
 			},
+		}, {
+			name: "test-2",
+			policies: []kyverno.ClusterPolicy{
+				{
+					Spec: kyverno.Spec{
+						Rules: []kyverno.Rule{
+							{
+								MatchResources: kyverno.MatchResources{
+									ResourceDescription: kyverno.ResourceDescription{
+										Kinds:      []string{"Role"},
+										Operations: []kyverno.AdmissionOperation{"DELETE"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Spec: kyverno.Spec{
+						Rules: []kyverno.Rule{
+							{
+								MatchResources: kyverno.MatchResources{
+									ResourceDescription: kyverno.ResourceDescription{
+										Kinds:      []string{"Secrets"},
+										Operations: []kyverno.AdmissionOperation{"CONNECT"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedResult: map[string][]admissionregistrationv1.OperationType{
+				"Role":    {"DELETE"},
+				"Secrets": {"CONNECT"},
+			},
 		},
 	}
 
@@ -108,7 +144,7 @@ func TestAddOperationsForValidatingWebhookConf(t *testing.T) {
 							Kinds: []string{"ConfigMap"},
 						},
 					},
-					ExcludeResources: kyverno.MatchResources{
+					ExcludeResources: &kyverno.MatchResources{
 						ResourceDescription: kyverno.ResourceDescription{
 							Operations: []kyverno.AdmissionOperation{"DELETE", "CONNECT", "CREATE"},
 						},
@@ -200,7 +236,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 			name: "Test Case 1",
 			rules: []kyverno.Rule{
 				{
-					Mutation: kyverno.Mutation{
+					Mutation: &kyverno.Mutation{
 						PatchesJSON6902: "add",
 					},
 					MatchResources: kyverno.MatchResources{
@@ -219,7 +255,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 			name: "Test Case 2",
 			rules: []kyverno.Rule{
 				{
-					Mutation: kyverno.Mutation{
+					Mutation: &kyverno.Mutation{
 						PatchesJSON6902: "add",
 					},
 					MatchResources: kyverno.MatchResources{
@@ -227,7 +263,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 							Kinds: []string{"Secret"},
 						},
 					},
-					ExcludeResources: kyverno.MatchResources{
+					ExcludeResources: &kyverno.MatchResources{
 						ResourceDescription: kyverno.ResourceDescription{
 							Operations: []kyverno.AdmissionOperation{"UPDATE"},
 						},
@@ -242,7 +278,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 			name: "Test Case 3",
 			rules: []kyverno.Rule{
 				{
-					Mutation: kyverno.Mutation{
+					Mutation: &kyverno.Mutation{
 						PatchesJSON6902: "add",
 					},
 					MatchResources: kyverno.MatchResources{
@@ -253,7 +289,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 					},
 				},
 				{
-					Mutation: kyverno.Mutation{
+					Mutation: &kyverno.Mutation{
 						PatchesJSON6902: "add",
 					},
 					MatchResources: kyverno.MatchResources{
@@ -272,7 +308,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 			name: "Test Case 4",
 			rules: []kyverno.Rule{
 				{
-					Mutation: kyverno.Mutation{
+					Mutation: &kyverno.Mutation{
 						PatchesJSON6902: "add",
 					},
 					MatchResources: kyverno.MatchResources{
@@ -283,7 +319,7 @@ func TestAddOperationsForMutatingtingWebhookConf(t *testing.T) {
 					},
 				},
 				{
-					Mutation: kyverno.Mutation{
+					Mutation: &kyverno.Mutation{
 						PatchesJSON6902: "add",
 					},
 					MatchResources: kyverno.MatchResources{
@@ -334,8 +370,9 @@ func TestAddOperationsForMutatingtingWebhookConfMultiplePolicies(t *testing.T) {
 					Spec: kyverno.Spec{
 						Rules: []kyverno.Rule{
 							{
-								Mutation: kyverno.Mutation{
-									RawPatchStrategicMerge: &apiextensionsv1.JSON{Raw: []byte(`"nodeSelector": {<"public-ip-type": "elastic"}, +"priorityClassName": "elastic-ip-required"`)}},
+								Mutation: &kyverno.Mutation{
+									RawPatchStrategicMerge: &apiextensionsv1.JSON{Raw: []byte(`"nodeSelector": {<"public-ip-type": "elastic"}, +"priorityClassName": "elastic-ip-required"`)},
+								},
 								MatchResources: kyverno.MatchResources{
 									ResourceDescription: kyverno.ResourceDescription{
 										Kinds: []string{"Pod"},
@@ -349,7 +386,7 @@ func TestAddOperationsForMutatingtingWebhookConfMultiplePolicies(t *testing.T) {
 					Spec: kyverno.Spec{
 						Rules: []kyverno.Rule{
 							{
-								Generation: kyverno.Generation{},
+								Generation: &kyverno.Generation{},
 								MatchResources: kyverno.MatchResources{
 									ResourceDescription: kyverno.ResourceDescription{
 										Kinds: []string{"Deployments", "StatefulSet", "DaemonSet", "Job"},
