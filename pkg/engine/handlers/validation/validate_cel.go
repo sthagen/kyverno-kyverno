@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	kyvernov2 "github.com/kyverno/kyverno/api/kyverno/v2"
+	kyvernov2beta1 "github.com/kyverno/kyverno/api/kyverno/v2beta1"
 	engineapi "github.com/kyverno/kyverno/pkg/engine/api"
 	"github.com/kyverno/kyverno/pkg/engine/handlers"
 	"github.com/kyverno/kyverno/pkg/engine/internal"
@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/admission/plugin/cel"
-	"k8s.io/apiserver/pkg/admission/plugin/policy/validating"
+	"k8s.io/apiserver/pkg/admission/plugin/validatingadmissionpolicy"
 	"k8s.io/apiserver/pkg/admission/plugin/webhook/matchconditions"
 	celconfig "k8s.io/apiserver/pkg/apis/cel"
 	"k8s.io/client-go/tools/cache"
@@ -45,7 +45,7 @@ func (h validateCELHandler) Process(
 	resource unstructured.Unstructured,
 	rule kyvernov1.Rule,
 	_ engineapi.EngineContextLoader,
-	exceptions []*kyvernov2.PolicyException,
+	exceptions []kyvernov2beta1.PolicyException,
 ) (unstructured.Unstructured, []engineapi.RuleResponse) {
 	// check if there is a policy exception matches the incoming resource
 	exception := engineutils.MatchesException(exceptions, policyContext, logger)
@@ -126,7 +126,7 @@ func (h validateCELHandler) Process(
 	// newMatcher will be used to check if the incoming resource matches the CEL preconditions
 	newMatcher := matchconditions.NewMatcher(matchConditionFilter, nil, policyKind, "", policyName)
 	// newValidator will be used to validate CEL expressions against the incoming object
-	validator := validating.NewValidator(filter, newMatcher, auditAnnotationFilter, messageExpressionfilter, nil)
+	validator := validatingadmissionpolicy.NewValidator(filter, newMatcher, auditAnnotationFilter, messageExpressionfilter, nil)
 
 	var namespace *corev1.Namespace
 	// Special case, the namespace object has the namespace of itself.
@@ -161,7 +161,7 @@ func (h validateCELHandler) Process(
 	}
 	authorizer := internal.NewAuthorizer(h.client, gvk)
 	// validate the incoming object against the rule
-	var validationResults []validating.ValidateResult
+	var validationResults []validatingadmissionpolicy.ValidateResult
 	if hasParam {
 		paramKind := rule.Validation.CEL.ParamKind
 		paramRef := rule.Validation.CEL.ParamRef
@@ -182,7 +182,7 @@ func (h validateCELHandler) Process(
 
 	for _, validationResult := range validationResults {
 		// no validations are returned if preconditions aren't met
-		if datautils.DeepEqual(validationResult, validating.ValidateResult{}) {
+		if datautils.DeepEqual(validationResult, validatingadmissionpolicy.ValidateResult{}) {
 			return resource, handlers.WithResponses(
 				engineapi.RuleSkip(rule.Name, engineapi.Validation, "cel preconditions not met"),
 			)
@@ -190,13 +190,13 @@ func (h validateCELHandler) Process(
 
 		for _, decision := range validationResult.Decisions {
 			switch decision.Action {
-			case validating.ActionAdmit:
-				if decision.Evaluation == validating.EvalError {
+			case validatingadmissionpolicy.ActionAdmit:
+				if decision.Evaluation == validatingadmissionpolicy.EvalError {
 					return resource, handlers.WithResponses(
 						engineapi.RuleError(rule.Name, engineapi.Validation, decision.Message, nil),
 					)
 				}
-			case validating.ActionDeny:
+			case validatingadmissionpolicy.ActionDeny:
 				return resource, handlers.WithResponses(
 					engineapi.RuleFail(rule.Name, engineapi.Validation, decision.Message),
 				)

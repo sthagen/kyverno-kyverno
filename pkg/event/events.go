@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	kyvernov1 "github.com/kyverno/kyverno/api/kyverno/v1"
-	kyvernov2 "github.com/kyverno/kyverno/api/kyverno/v2"
+	kyvernov2alpha1 "github.com/kyverno/kyverno/api/kyverno/v2alpha1"
 	engineapi "github.com/kyverno/kyverno/pkg/engine/api"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -279,10 +279,10 @@ func NewPolicyExceptionEvents(engineResponse engineapi.EngineResponse, ruleResp 
 	return []Info{policyEvent, exceptionEvent}
 }
 
-func NewCleanupPolicyEvent(policy kyvernov2.CleanupPolicyInterface, resource unstructured.Unstructured, err error) Info {
+func NewCleanupPolicyEvent(policy kyvernov2alpha1.CleanupPolicyInterface, resource unstructured.Unstructured, err error) Info {
 	regarding := corev1.ObjectReference{
 		// TODO: iirc it's not safe to assume api version is set
-		APIVersion: "kyverno.io/v2",
+		APIVersion: "kyverno.io/v2beta1",
 		Kind:       policy.GetKind(),
 		Name:       policy.GetName(),
 		Namespace:  policy.GetNamespace(),
